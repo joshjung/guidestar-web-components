@@ -7,7 +7,7 @@ emcc ./src/sparkline.c \
   -o ./build/temp/sparkline-wasm.js \
   -sMODULARIZE=1 \
   -sEXPORT_ES6=1 \
-  -sEXPORTED_FUNCTIONS=_renderWave,_mallocFloatBuffer \
+  -sEXPORTED_FUNCTIONS=_renderWave,_mallocFloatBuffer,_freeFloatBuffer \
   -sEXPORTED_RUNTIME_METHODS=ccall \
   -s TOTAL_MEMORY=2MB \
   -s "ENVIRONMENT='web'"

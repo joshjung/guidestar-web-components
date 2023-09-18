@@ -8,6 +8,7 @@ export type SparklineOptions = {
 export type SparklineWasmModule = {
   _renderWave: (width : number, height : number, dataPtr : number, length : number) => number
   _mallocFloatBuffer : (size : number) => number
+  _freeFloatBuffer : (dataPtr : number) => void
   HEAPU8 : Uint8Array
   HEAPF32 : Float32Array
 }
@@ -16,6 +17,7 @@ export type SparklineWasmModule = {
 export default class Sparkline {
   module : SparklineWasmModule | null = null
   ctx : CanvasRenderingContext2D | null = null
+  dataPtr : number | null = null
 
   constructor(options : SparklineOptions) {
     const { canvas, ready } = options;
@@ -49,16 +51,20 @@ export default class Sparkline {
       throw new Error('Wait until Sparkline is ready!');
     }
 
+    if (this.dataPtr !== null) {
+      this.module._freeFloatBuffer(this.dataPtr);
+    }
+
     // We need to put our data into the sparkline WASM memory so it can be used
-    const dataPtr : number = this.module._mallocFloatBuffer(data.length)
-    const dataArray : Float32Array = new Float32Array(this.module.HEAPF32.buffer, dataPtr, data.length);
+    this.dataPtr = this.module._mallocFloatBuffer(data.length)
+    const dataArray : Float32Array = new Float32Array(this.module.HEAPF32.buffer, this.dataPtr, data.length);
 
     for (let i : number = 0; i < data.length; i++) {
       dataArray[i] = data[i]
     }
 
     // Render!
-    const pointer : number = this.module._renderWave(width, height, dataPtr, data.length);
+    const pointer : number = this.module._renderWave(width, height, this.dataPtr, data.length);
     const clampedArray : Uint8ClampedArray = new Uint8ClampedArray(this.module.HEAPU8.buffer, pointer, width * height * 4);
 
     const img : ImageData = new ImageData(clampedArray, width, height);

@@ -91,3 +91,7 @@ unsigned int* EMSCRIPTEN_KEEPALIVE renderWave(int width, int height, float* poin
 float* mallocFloatBuffer(int size) {
   return malloc(size * 4);
 }
+
+void freeFloatBuffer(float *toFree) {
+  free(toFree);
+}
