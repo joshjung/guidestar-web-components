@@ -1,4 +1,6 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: 'development',
@@ -9,27 +11,16 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
-      },
-      {
-        test: /\.wasm$/,
-        type: "asset/inline",
       }
     ],
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
-  experiments: {
-    asyncWebAssembly: true,
-    futureDefaults: true
-  },
   output: {
-    filename: 'sparkline.js',
+    filename: 'sparkline-demo.js',
     path: path.resolve(__dirname, 'dist'),
-    assetModuleFilename: 'assets/[hash][ext][query]',
-    library: {
-      name: 'sparkline',
-      type: 'umd'
-    }
-  }
+    assetModuleFilename: 'assets/[hash][ext][query]'
+  },
+  plugins: [new HtmlWebpackPlugin()]
 };
