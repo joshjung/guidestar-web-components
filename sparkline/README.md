@@ -4,6 +4,11 @@ A Web-Assembly sparkline (mini-chart) control.
 
 Designed to be as absolutely fast as possible.
 
+# Performance
+
+Using web assembly to write the pixels directly, this control can render 1 million samples in roughly 15 milliseconds 
+on my Macbook Air M1. Run the demo and open your console to see it live. 
+
 # Demo
 
 The demo application code can be found in `demos/sparkline`.
@@ -30,7 +35,7 @@ To run the demo, see instructions for `Development` below.
 
 You will need to install [Emscripten](https://emscripten.org/index.html) and ensure that `emcc` is available on your path.
 
-Once that is done, you can:
+Once that is done, you can cd into the `/sparkline` directory (NOT the demo directory) and:
 
     npm run dev
 
