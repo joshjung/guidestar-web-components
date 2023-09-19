@@ -7,6 +7,7 @@
     ".": "./dist/sparkline.js",
     "./sparkline.wasm": "./dist/sparkline-wasm.wasm"
   },
+  "url": "https://github.com/joshjung/guidestar-web-components",
   "typings": "./dist/src/index.d.ts",
   "scripts": {
     "dev": "scripts/dev.sh",
@@ -15,7 +16,25 @@
     "release:minor": "npm version minor && git push --follow-tags && npm publish",
     "release:patch": "npm version patch && git push --follow-tags && npm publish"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshjung/guidestar-web-components"
+  },
+  "files": [
+    "src",
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "wasm",
+    "sparkline",
+    "chart",
+    "charting",
+    "audio",
+    "wav",
+    "wave"
+  ],
+  "email": "joshua.p.jung@gmail.com",
   "license": "MIT",
   "devDependencies": {
     "chokidar-cli": "^3.0.0",
