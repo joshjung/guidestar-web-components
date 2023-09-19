@@ -1,4 +1,4 @@
-import Sparkline from '@guidestar-web-components/sparkline';
+import Sparkline from '@guidestar/sparkline';
 
 const width: number = 700;
 const height: number = 100;

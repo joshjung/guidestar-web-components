@@ -4,9 +4,17 @@ A Web-Assembly sparkline (mini-chart) control.
 
 Designed to be as absolutely fast as possible.
 
+# Demo
+
+The demo application code can be found in `demos/sparkline`.
+
+To run the demo, see instructions for `Local Development` below.
+
+![Demonstraction of the sparkline in action](https://i.imgur.com/b2lRnIN.gif)
+
 # Usage
 
-    import Sparkline from '@guidestar-web-components/sparkline'
+    import Sparkline from '@guidestar/sparkline'
 
     const sparkline = new Sparkline({
       ready: () => {

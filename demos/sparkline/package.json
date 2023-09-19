@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@guidestar-web-components/sparkline": "../../sparkline"
+    "@guidestar/sparkline": "../../sparkline"
   },
   "devDependencies": {
     "chokidar-cli": "^3.0.0",
