@@ -26,6 +26,8 @@
     "README.md"
   ],
   "keywords": [
+    "waveform",
+    "oscillogram",
     "wasm",
     "sparkline",
     "chart",
