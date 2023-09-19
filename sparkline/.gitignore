@@ -27,4 +27,5 @@ node_modules
 # IDE
 .idea
 
-build/temp
+build
+dist/webpack.config.d.ts

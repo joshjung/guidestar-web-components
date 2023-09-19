@@ -1,19 +1,21 @@
-import Sparkline from 'jwc-sparkline';
+import Sparkline from '@guidestar-web-components/sparkline';
 
 const width: number = 700;
 const height: number = 100;
 let recording : boolean = false;
 let mediaRecorder : MediaRecorder | null = null;
 let audio: Blob | null = null;
-let sparkline : typeof Sparkline = undefined;
+let sparkline : Sparkline | undefined = undefined;
+let canvas :HTMLCanvasElement | undefined = undefined;
+let chunks : any[] = [];
 
 function initialize() {
   createRecordingButtons();
+  createSparklineCanvas(width, height);
 }
 
 function startRecording() {
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    console.log("getUserMedia supported.");
     navigator.mediaDevices
       .getUserMedia(
         // constraints - only audio needed for this app
@@ -25,12 +27,16 @@ function startRecording() {
       // Success callback
       .then((stream : MediaStream) => {
         mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
+        mediaRecorder.start(100);
         mediaRecorder.ondataavailable = (e : BlobEvent) => {
-          audio = e.data;
+          chunks.push(e.data)
+          audio = new Blob(chunks);
 
           renderWaveToSparkline()
         };
+        mediaRecorder.onstop = () => {
+          chunks = [];
+        }
       })
 
       // Error callback
@@ -57,14 +63,29 @@ function renderWaveToSparkline() {
     const audioContext : AudioContext = new AudioContext();
 
     audioContext.decodeAudioData(arrayBuffer).then(audioBuffer => {
+      if (!sparkline || !canvas) {
+        throw new Error('sparkline, or canvas was null');
+      }
+
       const values : number[] = Array.prototype.slice.call(audioBuffer.getChannelData(0));
-      sparkline.renderWave(values, width, height);
+
+      /**
+       * This is the important part! Render a sparkline using some data stored here in 'values' array.
+       *
+       * TODO: we need a way to tell the sparkline to reuse the memory for the pixels here because
+       *       there is no point in reallocating memory every single time.
+       */
+      sparkline.renderWave(canvas, values, width, height, {
+        backgroundColor: 0xFFCC4444,
+        foregroundColor: 0xFFFFFFFF,
+        fillBackground: true
+      });
     })
   })
 }
 
 function createSparklineCanvas(width : number, height : number) {
-  const canvas :HTMLCanvasElement = document.createElement('canvas');
+  canvas = document.createElement('canvas');
 
   canvas.id = "CursorLayer";
   canvas.width = width;
@@ -75,8 +96,6 @@ function createSparklineCanvas(width : number, height : number) {
 
   const body : HTMLBodyElement = document.getElementsByTagName("body")[0];
   body.appendChild(canvas);
-
-  return canvas;
 }
 
 function createRecordingButtons() {
@@ -102,12 +121,14 @@ function createRecordingButtons() {
 if (typeof window !== 'undefined') {
   initialize();
 
-  const canvas :HTMLCanvasElement = createSparklineCanvas(width, height);
-
+  /**
+   * Here is where we create a new Sparkline object, and of course we could listen to the ready() callback if
+   * we need to do something immediately when the WASM stuff is loaded and ready to go.
+   */
   sparkline = new Sparkline({
-    canvas,
+    profile: true,
     ready: () => {
-
+      console.log('Sparkline is ready to render!');
     }
   });
 }
