@@ -13,7 +13,10 @@ on my Macbook Air M1. Run the demo and open your console to see it live.
 
 The demo application code can be found in `demos/sparkline`.
 
-To run the demo, see instructions for `Development` below.
+To run the demo:
+
+    cd demos/sparkline
+    npm run demo
 
 ![Demonstraction of the sparkline in action](https://i.imgur.com/b2lRnIN.gif)
 

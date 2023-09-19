@@ -4,7 +4,8 @@
   "description": "A basic Web Assembly sparkline",
   "main": "index.js",
   "scripts": {
-    "dev": "rm -rf dist && mkdirp dist && webpack"
+    "demo": "http-server -o ./dist",
+    "build": "rm -rf dist && mkdirp dist && webpack"
   },
   "author": "",
   "license": "MIT",
