@@ -10,7 +10,10 @@
   "typings": "./dist/src/index.d.ts",
   "scripts": {
     "dev": "scripts/dev.sh",
-    "build": "scripts/build.sh"
+    "build": "scripts/build.sh",
+    "release:major": "npm version major && git push --follow-tags && npm publish",
+    "release:minor": "npm version minor && git push --follow-tags && npm publish",
+    "release:patch": "npm version patch && git push --follow-tags && npm publish"
   },
   "author": "",
   "license": "MIT",
