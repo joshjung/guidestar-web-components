@@ -9,6 +9,8 @@ Designed to be as absolutely fast as possible.
 Using web assembly to write the pixels directly, this control can render 1 million samples in roughly 15 milliseconds 
 on my Macbook Air M1. Run the demo and open your console to see it live. 
 
+Gzipped size of the entire javascript file is ~10kb.
+
 # Demo: Waveform / Oscillogram)
 
 The demo application code can be found in `demos/sparkline`.
