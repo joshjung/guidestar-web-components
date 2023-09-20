@@ -3,53 +3,61 @@
 #include <math.h>
 #include <stdbool.h>
 #include "float.h"
+#include <malloc.h>
 
-unsigned int* pixelData = NULL;
-
-void freeRenderMemory() {
-  if (pixelData != NULL) {
-    free(pixelData);
-    pixelData = NULL;
+/**
+ * Fill buffer.
+ */
+void fillBuffer(unsigned int *pixels, unsigned int backgroundColor, int length) {
+  for (int i = 0; i < length; i++) {
+    pixels[i] = backgroundColor;
   }
 }
 
-// see: https://gist.github.com/aknuds1/533f7b228aa46e9ee4c8
-unsigned int* EMSCRIPTEN_KEEPALIVE renderWave(
+/**
+ * Fill pixels with a color.
+ */
+void fill(unsigned int *pixels, unsigned int backgroundColor, int xStart, int xEnd, int yStart, int yEnd, int width) {
+  for (int y = yStart; y < yEnd; y++) {
+    int yw = y * width;
+      for (int x = xStart; x < xEnd; x++) {
+        pixels[yw + x] = backgroundColor;
+    }
+  }
+}
+
+/**
+ * Render an oscillogram pixel by pixel based on the input samples.
+ */
+void renderWaveForm(
+    unsigned int *pixels,
+    int topLeftX,
+    int topLeftY,
     int width,
     int height,
-    float* points,
+    float* samples,
     int length,
     unsigned int backgroundColor,
     unsigned int foregroundColor,
     bool fillBackground
 ) {
-  freeRenderMemory();
-
-  pixelData = malloc((width * height) * sizeof(int));
-
   float min = FLT_MAX;
   float max = FLT_MIN;
 
-  for (int i = 0; i < length; i++) {
-    min = fmin(min, points[i]);
-    max = fmax(max, points[i]);
+  for (int j = 0; j < length; j++) {
+    min = fmin(min, samples[j]);
+    max = fmax(max, samples[j]);
   }
 
   float range = max - min;
 
   if (fillBackground) {
-    // Fill with background color
-    for (int y = 0; y < height; y++) {
-      int yw = y * width;
-        for (int x = 0; x < width; x++) {
-          pixelData[yw + x] = backgroundColor;
-      }
-    }
+    fill(pixels, backgroundColor, topLeftX, width, topLeftY, height, width);
   }
 
   float xJump = (float)width / (float)length;
 
-  int centerY = round(height / 2);
+  int centerY = topLeftY + round(height / 2);
 
   int lastXRendered = -1;
 
@@ -59,12 +67,12 @@ unsigned int* EMSCRIPTEN_KEEPALIVE renderWave(
 
   // Now draw the wave...
   for (int i = 0; i < length; i++) {
-    float amplitudeNormalized = points[i] < 0 // fabs(points[i]) / (range / 2); // From 0.0 - 1.0
-      ? fabs(points[i]) / fabs(min)
-      : points[i] / max;
+    float amplitudeNormalized = samples[i] < 0
+      ? fabs(samples[i]) / fabs(min)
+      : samples[i] / max;
 
     // Figure out x position of the line
-    int x = round(xJump * (float)i);
+    int x = topLeftX + round(xJump * (float)i);
 
     // Do not rerender a line twice!
     if (x != lastXRendered) {
@@ -83,7 +91,7 @@ unsigned int* EMSCRIPTEN_KEEPALIVE renderWave(
       int yEnd = centerY + pixelDistFromCenter;
 
       for (int y = yStart; y < yEnd; y++) {
-        pixelData[(y * width) + x] = foregroundColor;
+        pixels[(y * width) + x] = foregroundColor;
       }
 
       lastXRendered = x;
@@ -94,20 +102,89 @@ unsigned int* EMSCRIPTEN_KEEPALIVE renderWave(
       averagedLength++;
     }
   }
-
-  return &pixelData[0];
 }
 
 /**
- * Create a generic slot in memory for floats.
+ * Render a vertical line.
+ */
+void renderVerticalLine(
+    unsigned int *pixels,
+    int x,
+    int lineWidth,
+    int width,
+    int height,
+    unsigned int foregroundColor
+) {
+  int xStart = lineWidth > 1 ? x - ceil(lineWidth / 2.0f) : x;
+  int xEnd = lineWidth > 1 ? x - floor(lineWidth / 2.0f) : x;
+
+  for (int i = xStart; i < xEnd; i++) {
+    if (i >= 0 && i < width) {
+      for (int y = 0; y < height; y++) {
+        pixels[(y * width) + i] = foregroundColor;
+      }
+    }
+  }
+}
+
+/**
+ * Render a vertical line.
+ */
+void renderVerticalTicks(
+    unsigned int *pixels,
+    float xStart,
+    float xEnd,
+    float xGap,
+    int tickWidth,
+    int tickHeight,
+    int width,
+    int height,
+    unsigned int foregroundColor
+) {
+  int x = 0, xs = 0, xe = 0, i = 0, y = 0;
+
+  for (float xf = xStart; xf < xEnd; xf+= xGap) {
+    x = round(xf);
+
+    xs = tickWidth > 1 ? x - ceil(tickWidth / 2.0f) : x;
+    xe = tickWidth > 1 ? x - floor(tickWidth / 2.0f) : x;
+
+    for (i = xs; i < xe; i++) {
+      if (i >= 0 && i < width) {
+        for (y = height; y > height - tickHeight; y--) {
+          if (y >= 0 && y < height) {
+            pixels[(y * width) + i] = foregroundColor;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Create a generic slot in memory for pixels.
+ */
+unsigned int* mallocPixelBuffer(int width, int height) {
+  return malloc((width * height) * sizeof(unsigned int));
+}
+
+/**
+ * Create a generic slot in memory for floats, used to pass samples to renderWaveForm().
  */
 float* mallocFloatBuffer(int size) {
-  return malloc(size * 4);
+  return malloc(size * sizeof(float));
 }
 
 /**
  * Free a spot in memory initialized by mallocFloatBuffer
  */
 void freeFloatBuffer(float *toFree) {
+  free(toFree);
+}
+
+/**
+ * Free the pixel buffer, usually after rendering it to the canvas.
+ */
+void freePixelBuffer(unsigned int *toFree) {
   free(toFree);
 }

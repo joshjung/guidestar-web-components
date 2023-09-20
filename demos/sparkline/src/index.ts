@@ -1,5 +1,7 @@
 import Sparkline from '@guidestar/sparkline';
 
+const maxSamplesToRender : number = 500000;
+
 const width: number = 700;
 const height: number = 100;
 let recording : boolean = false;
@@ -27,7 +29,7 @@ function startRecording() {
       // Success callback
       .then((stream : MediaStream) => {
         mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start(100);
+        mediaRecorder.start(50);
         mediaRecorder.ondataavailable = (e : BlobEvent) => {
           chunks.push(e.data)
           audio = new Blob(chunks);
@@ -67,7 +69,13 @@ function renderWaveToSparkline() {
         throw new Error('sparkline, or canvas was null');
       }
 
-      const values : number[] = Array.prototype.slice.call(audioBuffer.getChannelData(0));
+      let values : number[] = Array.prototype.slice.call(audioBuffer.getChannelData(0));
+      let offsetMs : number = 0;
+
+      if (values.length > maxSamplesToRender) {
+        offsetMs = ((values.length % maxSamplesToRender) / audioBuffer.sampleRate) * 1000;
+        values = values.slice(values.length - maxSamplesToRender);
+      }
 
       /**
        * This is the important part! Render a sparkline using some data stored here in 'values' array.
@@ -75,10 +83,22 @@ function renderWaveToSparkline() {
        * TODO: we need a way to tell the sparkline to reuse the memory for the pixels here because
        *       there is no point in reallocating memory every single time.
        */
-      sparkline.renderWave(canvas, values, width, height, {
+      sparkline.renderWaveForm(canvas, values, width, height, {
         backgroundColor: 0xFFCC4444,
         foregroundColor: 0xFFFFFFFF,
-        fillBackground: true
+        fillBackground: true,
+        sampleRate: audioBuffer.sampleRate,
+        verticalTicks: [{
+          ms: 100,
+          height: 10,
+          color: 0xFF888888,
+          offsetMs
+        }, {
+          ms: 1000,
+          height: 20,
+          color: 0xFFCCCCCC,
+          offsetMs
+        }]
       });
     })
   })
