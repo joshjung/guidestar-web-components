@@ -3,7 +3,7 @@
 rm -rf dist && mkdirp dist
 rm -rf build && mkdirp build
 
-emcc ./src/sparkline.c \
+emcc ../shared/wasm/memory.c ../shared/wasm/renderer.c ./src/sparkline.c \
   -Os \
   -o ./build/sparkline-wasm.js \
   -sMODULARIZE=1 \

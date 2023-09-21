@@ -1,15 +1,15 @@
 # Sparkline
 
-A Web-Assembly sparkline (mini-chart) control.
+A Web-Assembly sparkline (mini-chart) control written in C and TypeScript.
 
-Designed to be as absolutely fast as possible.
+Designed to be fast.
 
 # Performance
 
-Using web assembly to write the pixels directly, this control can render 1 million samples in roughly 15 milliseconds 
-on my Macbook Air M1. Run the demo and open your console to see it live. 
+Using web assembly to write the pixels directly, this control can render 1 million audio
+samples in roughly 15 milliseconds on my Macbook Air M1. 
 
-Gzipped size of the entire javascript file is ~10kb.
+Run the demo and open your console to see it live. 
 
 # Demo: Waveform / Oscillogram)
 
@@ -20,21 +20,60 @@ To run the demo:
     cd demos/sparkline
     npm run demo
 
-![Demonstraction of the sparkline in action](https://i.imgur.com/b2lRnIN.gif)
+![Demonstraction of the sparkline in action](https://i.imgur.com/ok4B9kD.gif)
 
-# Usage
+# Example (Basic)
 
     import Sparkline from '@guidestar/sparkline'
+
+    // Note: You need to get a <canvas> instance at some point here before
+    // calling renderWave.
+
+    const data = [];
+    for (let i = 0; i < 10000; i++) {
+      data[i] = Math.random();
+    }
 
     const sparkline = new Sparkline({
       ready: () => {
         sparkline.renderWave(canvas, width, height, data, {
           backgroundColor: 0xFFCCAA88,   // Colors are 0x[ALPHA][BLUE][GREEN][RED]
-          foregroundColor: 0xFFAAAAAA,
-          fillBackground: true
+          foregroundColor: 0xFFAAAAAA
         });
       }
     });
+
+# Example (Ticks)
+
+You can render ticks every X milliseconds rather easily, with custom colors:
+
+
+    import Sparkline from '@guidestar/sparkline'
+
+    let sparklineReady = false;
+
+    const sparkline = new Sparkline({
+      ready: () => sparklineReady = true
+    });
+
+    ...
+
+    if (sparklineReady) {
+        sparkline.renderWaveForm(canvas, values, width, height, {
+            backgroundColor: 0xFFCC4444,
+            foregroundColor: 0xFFFFFFFF,
+            sampleRate: audioBuffer.sampleRate, // required to know where to mark the ticks
+            verticalTicks: [{
+              ms: 100,
+              height: 10,
+              color: 0xFF888888
+            }, {
+              ms: 1000,
+              height: 20,
+              color: 0xFFCCCCCC
+            }]
+          });
+    }
 
 # Development
 

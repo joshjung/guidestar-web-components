@@ -4,27 +4,8 @@
 #include <stdbool.h>
 #include "float.h"
 #include <malloc.h>
-
-/**
- * Fill buffer.
- */
-void fillBuffer(unsigned int *pixels, unsigned int backgroundColor, int length) {
-  for (int i = 0; i < length; i++) {
-    pixels[i] = backgroundColor;
-  }
-}
-
-/**
- * Fill pixels with a color.
- */
-void fill(unsigned int *pixels, unsigned int backgroundColor, int xStart, int xEnd, int yStart, int yEnd, int width) {
-  for (int y = yStart; y < yEnd; y++) {
-    int yw = y * width;
-      for (int x = xStart; x < xEnd; x++) {
-        pixels[yw + x] = backgroundColor;
-    }
-  }
-}
+#include "../../shared/wasm/memory.h"
+#include "../../shared/wasm/renderer.h"
 
 /**
  * Render an oscillogram pixel by pixel based on the input samples.
@@ -161,30 +142,4 @@ void renderVerticalTicks(
   }
 }
 
-/**
- * Create a generic slot in memory for pixels.
- */
-unsigned int* mallocPixelBuffer(int width, int height) {
-  return malloc((width * height) * sizeof(unsigned int));
-}
 
-/**
- * Create a generic slot in memory for floats, used to pass samples to renderWaveForm().
- */
-float* mallocFloatBuffer(int size) {
-  return malloc(size * sizeof(float));
-}
-
-/**
- * Free a spot in memory initialized by mallocFloatBuffer
- */
-void freeFloatBuffer(float *toFree) {
-  free(toFree);
-}
-
-/**
- * Free the pixel buffer, usually after rendering it to the canvas.
- */
-void freePixelBuffer(unsigned int *toFree) {
-  free(toFree);
-}

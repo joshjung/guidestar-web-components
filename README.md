@@ -9,11 +9,11 @@ render a waveform from an audio file.
 
 This is a working project, see the `sparkline/README.md` for more details.
 
-### Sparkline Demo
+### Sparkline/Oscillogram Demo
 
 See [sparkline/README.md](https://github.com/joshjung/guidestar-web-components/blob/main/sparkline/README.md) for more details.
 
-![Demonstraction of the sparkline in action](https://i.imgur.com/b2lRnIN.gif)
+![Demonstraction of the sparkline in action](https://i.imgur.com/ok4B9kD.gif)
 
 # License
 
