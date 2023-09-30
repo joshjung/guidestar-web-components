@@ -4,6 +4,10 @@ A Web-Assembly sparkline (mini-chart) control written in C and TypeScript.
 
 Designed to be fast.
 
+# Installation
+
+    npm i -S @guidestar/sparkline
+
 # Performance
 
 Using web assembly to write the pixels directly, this control can render 1 million audio
