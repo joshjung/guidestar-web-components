@@ -1,8 +1,6 @@
 # Sparkline
 
-A Web-Assembly sparkline (mini-chart) control written in C and TypeScript.
-
-Designed to be fast.
+A Web-Assembly sparkline (mini-chart) control written in C and TypeScript. Designed to be fast.
 
 # Installation
 
@@ -19,30 +17,37 @@ Run the demo and open your console to see it live.
 
 The demo application code can be found in `demos/sparkline`.
 
-To run the demo:
+Run the demo:
 
     cd demos/sparkline
     npm run demo
 
-![Demonstraction of the sparkline in action](https://i.imgur.com/ok4B9kD.gif)
+Grant website access to your microphone and then click "Start Recording..." Two
+oscillograms will demonstrate rendering to canvases.
+
+![Demonstraction of the sparkline in action](https://i.imgur.com/EvVZtAO.gif)
 
 # Example (Basic)
 
     import Sparkline from '@guidestar/sparkline'
 
-    // Note: You need to get a <canvas> instance at some point here before
+    // Note: You need to get a HTML <canvas> instance at some point here before
     // calling renderWave.
 
+    ...
+
+    const width = 500;
+    const height = 200;
+
     const data = [];
-    for (let i = 0; i < 10000; i++) {
-      data[i] = Math.random();
-    }
+    for (let i = 0; i < 10000; i++) data[i] = Math.random()
 
     const sparkline = new Sparkline({
       ready: () => {
-        sparkline.renderWave(canvas, width, height, data, {
+        sparkline.renderWaveForm(canvas, data, width, height, {
           backgroundColor: 0xFFCCAA88,   // Colors are 0x[ALPHA][BLUE][GREEN][RED]
-          foregroundColor: 0xFFAAAAAA
+          foregroundColor: 0xFFAAAAAA,
+          fillBackground: true
         });
       }
     });
@@ -54,6 +59,10 @@ You can render ticks every X milliseconds rather easily, with custom colors:
 
     import Sparkline from '@guidestar/sparkline'
 
+    const data = [...]; // Get an array with lots of numbers...
+
+    const sampleRate = 8000; // This is the sample rate of your audio, in samples per second.
+
     let sparklineReady = false;
 
     const sparkline = new Sparkline({
@@ -63,20 +72,20 @@ You can render ticks every X milliseconds rather easily, with custom colors:
     ...
 
     if (sparklineReady) {
-        sparkline.renderWaveForm(canvas, values, width, height, {
-            backgroundColor: 0xFFCC4444,
-            foregroundColor: 0xFFFFFFFF,
-            sampleRate: audioBuffer.sampleRate, // required to know where to mark the ticks
-            verticalTicks: [{
-              ms: 100,
-              height: 10,
-              color: 0xFF888888
-            }, {
-              ms: 1000,
-              height: 20,
-              color: 0xFFCCCCCC
-            }]
-          });
+      sparkline.renderWaveForm(canvas, data, width, height, {
+        backgroundColor: 0xFFCC4444,
+        foregroundColor: 0xFFFFFFFF,
+        sampleRate, // required to know where to mark the ticks
+        verticalTicks: [{
+          ms: 100, // A medium grey tick every 100 milliseconds
+          height: 10,
+          color: 0xFF888888
+        }, {
+          ms: 1000, // A lighter grey tick every 1 second
+          height: 20,
+          color: 0xFFCCCCCC
+        }]
+      });
     }
 
 # Development
@@ -94,7 +103,12 @@ It then starts a mini web-server at `localhost:8080` where you can see a demo of
 
 # Build
 
+Building involves compiling the C code to WASM, which is then base-64d and built into a webpack bundled
+Javascript file. You can see the final file in `dist/sparkline.js`.
+
+
     npm run build
+
 
 # License
 

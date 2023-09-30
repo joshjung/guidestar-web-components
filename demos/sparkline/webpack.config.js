@@ -22,5 +22,8 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     assetModuleFilename: 'assets/[hash][ext][query]'
   },
-  plugins: [new HtmlWebpackPlugin()]
+  plugins: [new HtmlWebpackPlugin({
+    title: 'Demo: @guidestar/sparkline',
+    template: './src/index.html'
+  })]
 };

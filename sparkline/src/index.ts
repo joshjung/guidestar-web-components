@@ -146,7 +146,7 @@ export default class Sparkline {
     if (this.options.profile && start) {
       let end : DOMHighResTimeStamp = window.performance.now();
 
-      console.log('Sparkline::renderWave took ' + (end - start) + ' milliseconds to render ', data.length + ` samples into a ${width}x${height} canvas.`);
+      console.log('Sparkline::renderWaveForm took ' + (end - start) + ' milliseconds to render ', data.length + ` samples into a ${width}x${height} canvas.`);
     }
   }
 }
