@@ -2,7 +2,7 @@ import sparkline from "../build/sparkline-wasm";
 
 export type SparklineOptions = {
   profile? : boolean
-  ready : () => void
+  ready? : () => void
 }
 
 type SparklineWasmModule = {
@@ -39,23 +39,36 @@ export type RenderWaveFormOptions = {
 
 // See: https://compile.fi/canvas-filled-three-ways-js-webassembly-and-webgl/
 export default class Sparkline {
+  private _initPromise? : Promise<void> = undefined;
+
   module : SparklineWasmModule | null = null
   dataPtr : number | null = null
   pixelPtr : number | null = null
   options : SparklineOptions
 
-  constructor(options : SparklineOptions) {
-    this.options = options;
+  constructor(options? : SparklineOptions) {
+    this.options = options || {};
 
-    sparkline({
-      print: function (text: string, ...other: string[]) {
-        if (other.length > 0) text = text + ' ' + Array.prototype.slice.call(other).join(' ');
-        console.log(text);
-      }
-    }).then((module : SparklineWasmModule) => {
-      this.module = module
-      options.ready();
-    });
+    this._initPromise = new Promise(resolve => {
+      sparkline({
+        print: function (text: string, ...other: string[]) {
+          if (other.length > 0) text = text + ' ' + Array.prototype.slice.call(other).join(' ');
+          console.log(text);
+        }
+      }).then((module : SparklineWasmModule) => {
+        this.module = module;
+
+        if (this.options.ready) {
+          this.options.ready();
+        }
+
+        resolve();
+      });
+    })
+  }
+
+  init() : Promise<void> {
+    return this._initPromise as Promise<void>;
   }
 
   /**
@@ -63,11 +76,13 @@ export default class Sparkline {
    *
    * @param canvas The canvas to render to.
    * @param data A series of numbers to render, where values magnitude is determined by their distance from 0.0.
+   * @param x The x location to render into
+   * @param y The y location to render into
    * @param width The width of the rendered image
    * @param height The height of the rendered image
    * @param options The optional RenderWaveFormOptions to choose how to render.
    */
-  renderWaveForm(canvas : HTMLCanvasElement, data : number[], width : number, height : number, options : RenderWaveFormOptions = {}) : void {
+  renderWaveForm(canvas : HTMLCanvasElement, data : number[], x : number, y : number, width : number, height : number, options : RenderWaveFormOptions = {}) : void {
     if (!this.module) {
       throw new Error('Do not call renderWave until Sparkline is ready!');
     }
@@ -99,7 +114,7 @@ export default class Sparkline {
 
     // We need to put our data into the sparkline WASM memory so it can be used
     // We have to initialize some memory within the heap of the WebAssembly context to store the data...
-    this.pixelPtr = this.module._mallocPixelBuffer(width, height);
+    this.pixelPtr = this.module._mallocPixelBuffer(width - x, height - y);
     this.dataPtr = this.module._mallocFloatBuffer(data.length)
 
     const dataArray : Float32Array = new Float32Array(this.module.HEAPF32.buffer, this.dataPtr, data.length);
@@ -110,7 +125,7 @@ export default class Sparkline {
     }
 
     // Render using WASM!
-    this.module._renderWaveForm(this.pixelPtr, 0, 0, width, height, this.dataPtr, data.length, backgroundColor, foregroundColor, true);
+    this.module._renderWaveForm(this.pixelPtr, x, y, width, height, this.dataPtr, data.length, backgroundColor, foregroundColor, true);
 
     if (verticalLineX !== undefined) {
       this.module._renderVerticalLine(this.pixelPtr, verticalLineX, 3, width, height, verticalLineColor);

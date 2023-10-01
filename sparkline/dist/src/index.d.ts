@@ -1,6 +1,6 @@
 export type SparklineOptions = {
     profile?: boolean;
-    ready: () => void;
+    ready?: () => void;
 };
 type SparklineWasmModule = {
     _fill: (pixelPtr: number, backgroundColor: number, xStart: number, xEnd: number, yStart: number, yEnd: number, width: number) => void;
@@ -32,20 +32,24 @@ export type RenderWaveFormOptions = {
     sampleRate?: number;
 };
 export default class Sparkline {
+    private _initPromise?;
     module: SparklineWasmModule | null;
     dataPtr: number | null;
     pixelPtr: number | null;
     options: SparklineOptions;
-    constructor(options: SparklineOptions);
+    constructor(options?: SparklineOptions);
+    init(): Promise<void>;
     /**
      * Render an audio-wave looking sparkline. This renders once and then cleans up memory preparing for another render.
      *
      * @param canvas The canvas to render to.
      * @param data A series of numbers to render, where values magnitude is determined by their distance from 0.0.
+     * @param x The x location to render into
+     * @param y The y location to render into
      * @param width The width of the rendered image
      * @param height The height of the rendered image
      * @param options The optional RenderWaveFormOptions to choose how to render.
      */
-    renderWaveForm(canvas: HTMLCanvasElement, data: number[], width: number, height: number, options?: RenderWaveFormOptions): void;
+    renderWaveForm(canvas: HTMLCanvasElement, data: number[], x: number, y: number, width: number, height: number, options?: RenderWaveFormOptions): void;
 }
 export {};

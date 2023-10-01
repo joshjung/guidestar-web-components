@@ -44,7 +44,7 @@ oscillograms will demonstrate rendering to canvases.
 
     const sparkline = new Sparkline({
       ready: () => {
-        sparkline.renderWaveForm(canvas, data, width, height, {
+        sparkline.renderWaveForm(canvas, data, 0, 0, width, height, {
           backgroundColor: 0xFFCCAA88,   // Colors are 0x[ALPHA][BLUE][GREEN][RED]
           foregroundColor: 0xFFAAAAAA,
           fillBackground: true
@@ -72,7 +72,7 @@ You can render ticks every X milliseconds rather easily, with custom colors:
     ...
 
     if (sparklineReady) {
-      sparkline.renderWaveForm(canvas, data, width, height, {
+      sparkline.renderWaveForm(canvas, data, 0, 0, width, height, {
         backgroundColor: 0xFFCC4444,
         foregroundColor: 0xFFFFFFFF,
         sampleRate, // required to know where to mark the ticks
