@@ -1,52 +1,52 @@
 import sparkline from "../build/sparkline-wasm";
 
 export type SparklineOptions = {
-  profile? : boolean
-  ready? : () => void
+  profile?: boolean
+  ready?: () => void
 }
 
 type SparklineWasmModule = {
-  _fill: (pixelPtr : number, backgroundColor : number, xStart : number, xEnd : number, yStart : number, yEnd : number, width :number) => void
-  _fillBuffer: (pixelPtr : number, backgroundColor : number, length :number) => void
-  _renderWaveForm: (pixelPtr : number, x : number, y : number, width : number, height : number, dataPtr : number, length : number, backgroundColor : number, foregroundColor : number, fillBackground : boolean) => void,
-  _renderVerticalLine: (pixelPtr : number, x : number, lineWidth : number, width : number, height : number, foregroundColor : number) => void
-  _renderVerticalTicks: (pixelPtr : number, xStart : number, xEnd : number, xGap : number, tickWidth : number, tickHeight : number, width : number, height : number, foregroundColor : number) => void
-  _mallocFloatBuffer : (size : number) => number
-  _mallocPixelBuffer: (width : number, height : number) => number
-  _freeFloatBuffer : (dataPtr : number) => void
-  _freePixelBuffer : (dataPtr : number) => void
-  HEAPU8 : Uint8Array
-  HEAPF32 : Float32Array
+  _fill: (pixelPtr: number, backgroundColor: number, xStart: number, xEnd: number, yStart: number, yEnd: number, width: number) => void
+  _fillBuffer: (pixelPtr: number, backgroundColor: number, length: number) => void
+  _renderWaveForm: (pixelPtr: number, x: number, y: number, width: number, height: number, dataPtr: number, length: number, backgroundColor: number, foregroundColor: number, fillBackground: boolean) => void,
+  _renderVerticalLine: (pixelPtr: number, x: number, lineWidth: number, width: number, height: number, foregroundColor: number) => void
+  _renderVerticalTicks: (pixelPtr: number, xStart: number, xEnd: number, xGap: number, tickWidth: number, tickHeight: number, width: number, height: number, foregroundColor: number) => void
+  _mallocFloatBuffer: (size: number) => number
+  _mallocPixelBuffer: (width: number, height: number) => number
+  _freeFloatBuffer: (dataPtr: number) => void
+  _freePixelBuffer: (dataPtr: number) => void
+  HEAPU8: Uint8Array
+  HEAPF32: Float32Array
 }
 
 export type RenderWaveFormVerticalTick = {
-  color : number
-  ms : number
-  height : number
-  offsetMs? : number
+  color: number
+  ms: number
+  height: number
+  offsetMs?: number
 }
 
 export type RenderWaveFormOptions = {
-  backgroundColor? : number
-  foregroundColor? : number
-  fillBackground? : boolean
-  alpha? : boolean,
-  verticalLineX? : number | undefined
-  verticalLineColor? : number | undefined
-  verticalTicks? : RenderWaveFormVerticalTick[] | undefined
-  sampleRate? : number
+  backgroundColor?: number
+  foregroundColor?: number
+  fillBackground?: boolean
+  alpha?: boolean,
+  verticalLineX?: number | undefined
+  verticalLineColor?: number | undefined
+  verticalTicks?: RenderWaveFormVerticalTick[] | undefined
+  sampleRate?: number
 }
 
 // See: https://compile.fi/canvas-filled-three-ways-js-webassembly-and-webgl/
 export default class Sparkline {
-  private _initPromise? : Promise<void> = undefined;
+  private _initPromise?: Promise<void> = undefined;
 
-  module : SparklineWasmModule | null = null
-  dataPtr : number | null = null
-  pixelPtr : number | null = null
-  options : SparklineOptions
+  module: SparklineWasmModule | null = null
+  dataPtr: number | null = null
+  pixelPtr: number | null = null
+  options: SparklineOptions
 
-  constructor(options? : SparklineOptions) {
+  constructor(options?: SparklineOptions) {
     this.options = options || {};
 
     this._initPromise = new Promise(resolve => {
@@ -55,7 +55,7 @@ export default class Sparkline {
           if (other.length > 0) text = text + ' ' + Array.prototype.slice.call(other).join(' ');
           console.log(text);
         }
-      }).then((module : SparklineWasmModule) => {
+      }).then((module: SparklineWasmModule) => {
         this.module = module;
 
         if (this.options.ready) {
@@ -67,7 +67,7 @@ export default class Sparkline {
     })
   }
 
-  init() : Promise<void> {
+  init(): Promise<void> {
     return this._initPromise as Promise<void>;
   }
 
@@ -82,21 +82,21 @@ export default class Sparkline {
    * @param height The height of the rendered image
    * @param options The optional RenderWaveFormOptions to choose how to render.
    */
-  renderWaveForm(canvas : HTMLCanvasElement, data : number[], x : number, y : number, width : number, height : number, options : RenderWaveFormOptions = {}) : void {
+  renderWaveForm(canvas: HTMLCanvasElement, data: number[], x: number, y: number, width: number, height: number, options: RenderWaveFormOptions = {}): void {
     if (!this.module) {
       throw new Error('Do not call renderWave until Sparkline is ready!');
     }
 
-    let start : DOMHighResTimeStamp | undefined = undefined;
+    let start: DOMHighResTimeStamp | undefined = undefined;
     if (this.options.profile) {
       start = window.performance.now();
     }
 
-    const ctx : CanvasRenderingContext2D | null = canvas.getContext(
+    const ctx: CanvasRenderingContext2D | null = canvas.getContext(
       '2d',
       {
         alpha: options.alpha !== undefined ? options.alpha : false,
-        antialias: false,
+        antialias: true,
         depth: false
       }
     ) as CanvasRenderingContext2D;
@@ -117,10 +117,10 @@ export default class Sparkline {
     this.pixelPtr = this.module._mallocPixelBuffer(width - x, height - y);
     this.dataPtr = this.module._mallocFloatBuffer(data.length)
 
-    const dataArray : Float32Array = new Float32Array(this.module.HEAPF32.buffer, this.dataPtr, data.length);
+    const dataArray: Float32Array = new Float32Array(this.module.HEAPF32.buffer, this.dataPtr, data.length);
 
     // Copy our points into the heap memory of WASM...
-    for (let i : number = 0; i < data.length; i++) {
+    for (let i: number = 0; i < data.length; i++) {
       dataArray[i] = data[i];
     }
 
@@ -131,7 +131,7 @@ export default class Sparkline {
       this.module._renderVerticalLine(this.pixelPtr, verticalLineX, 3, width, height, verticalLineColor);
     }
 
-    const { verticalTicks } = options;
+    const {verticalTicks} = options;
 
     if (verticalTicks && verticalTicks.length) {
       if (!options.sampleRate) {
@@ -148,7 +148,7 @@ export default class Sparkline {
       });
     }
 
-    const img : ImageData = new ImageData(new Uint8ClampedArray(this.module.HEAPU8.buffer, this.pixelPtr, width * height * 4), width, height);
+    const img: ImageData = new ImageData(new Uint8ClampedArray(this.module.HEAPU8.buffer, this.pixelPtr, width * height * 4), width, height);
 
     ctx.putImageData(img, 0, 0);
 
@@ -159,7 +159,7 @@ export default class Sparkline {
     this.pixelPtr = null;
 
     if (this.options.profile && start) {
-      let end : DOMHighResTimeStamp = window.performance.now();
+      let end: DOMHighResTimeStamp = window.performance.now();
 
       console.log('Sparkline::renderWaveForm took ' + (end - start) + ' milliseconds to render ', data.length + ` samples into a ${width}x${height} canvas.`);
     }

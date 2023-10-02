@@ -1,113 +1,60 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import Sparkline, {RenderWaveFormOptions} from '@guidestar/sparkline';
-import {AudioProviderEvent, AudioProviderEventTypes, IAudioProvider} from "./IAudioProvider";
-import './ReactAudioControl.css';
+import React, {useRef, useState} from 'react';
+import {RenderWaveFormOptions} from '@guidestar/sparkline';
+import {IAudioProvider} from "./IAudioProvider";
+import './ReactAudioControl.scss';
 import classNames from "classnames";
+import {RACContext, RACContextType} from "./ReactAudioControlContext";
+import RACCanvas from "./components/RACCanvas";
+import RACPlayPause from "./components/RACPlayPause";
 
 export type ChannelOptions = RenderWaveFormOptions & {
-  x? : number
-  y? : number
+  x?: number
+  y?: number
   width?: number
-  height? : number
+  height?: number
 }
 
 export interface ReactAudioControlProps {
   audioProvider: IAudioProvider
-  channelOptions? : ChannelOptions[]
-  className? : string
+  channelOptions?: ChannelOptions[]
+  className?: string,
+  children?: React.JSX.Element | React.JSX.Element[]
 }
 
-const sparkline : Sparkline = new Sparkline();
+const ReactAudioControl = ({audioProvider, channelOptions, className, children}: ReactAudioControlProps) => {
+  const classes: string = classNames('rac', className);
 
-const ReactAudioControl = ({ audioProvider, channelOptions, className }: ReactAudioControlProps) => {
-  const classes : string = classNames('gs-rac', className);
-
-  const canvasWrapperRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const [canvasWidth, setCanvasWidth] = useState<number>(0);
-  const [canvasHeight, setCanvasHeight] = useState<number>(0);
-  const [renderTrigger, setRenderTrigger] = useState(0);
-
-  function render(canvasWidth : number, canvasHeight : number) {
-    console.log(canvasRef?.current, audioProvider.loaded, canvasWidth, canvasHeight);
-
-    if (canvasRef?.current && audioProvider.loaded && canvasWidth && canvasHeight) {
-      // For now, default to just mono if not otherwise specified
-      channelOptions = channelOptions || [{
-        backgroundColor: 0xFF000000,
-        foregroundColor: 0xFFFFFFFF,
-        fillBackground: true
-      }];
-
-      channelOptions.forEach((channelOption, ix) => {
-        if (ix < audioProvider.getAudioBuffer().numberOfChannels) {
-          const _x : number = channelOption.x ?? 0;
-          const _y : number = channelOption.y ?? 0;
-          const _w : number = channelOption.width ?? canvasWidth;
-          const _h : number = channelOption.height ?? canvasHeight;
-          const _bg : number = channelOption.backgroundColor ?? 0xFF000000;
-          const _fg : number = channelOption.foregroundColor ?? 0xFFFFFFFF;
-          const _fbg : boolean = channelOption.fillBackground ?? false;
-
-          sparkline.renderWaveForm(canvasRef.current as HTMLCanvasElement, audioProvider.getSamples(ix), _x, _y, _w, _h, {
-            backgroundColor: _bg,
-            foregroundColor: _fg,
-            fillBackground: _fbg
-          });
-        } else {
-          console.warn(`Unable to render wave form for channel ${ix}`);
-        }
-      })
-    }
-  };
-
-  function calcSizeAndTriggerRender() {
-    if (canvasWrapperRef?.current) {
-      const bcr : DOMRect = canvasWrapperRef.current.getBoundingClientRect();
-
-      setCanvasWidth(Math.ceil(bcr.width));
-      setCanvasHeight(Math.ceil(bcr.height));
+  function togglePlay() {
+    if (state.playing) {
+      state.audioProvider?.getAudio().pause();
+    } else {
+      state.audioProvider?.getAudio().play();
     }
 
-    render(canvasWidth, canvasHeight);
+    setState({...state, playing: !state.playing});
   }
 
-  useEffect(() => {
-    render(canvasWidth, canvasHeight);
-  }, [canvasWidth, canvasHeight, renderTrigger]);
+  const [state, setState] = useState<RACContextType>({
+    audioProvider,
+    playing: false,
+    percent: 0,
+    channelOptions,
+    togglePlay
+  });
 
-  useEffect(() => {
-    audioProvider.addListener((event : AudioProviderEvent) => {
-      if (event.type === AudioProviderEventTypes.AUDIO_UPDATED) {
-        setRenderTrigger(renderTrigger+1);
-      }
-    });
+  children = children || <>
+    <RACPlayPause className="default"/>
+    <RACCanvas className="default"/>
+  </>;
 
-    calcSizeAndTriggerRender();
-  }, []);
-
-  function root_onResizeHandler() {
-    calcSizeAndTriggerRender();
-  }
-
-  function playPause_onClickHandler() {
-    audioProvider.getAudio().play();
-  }
-
-  return <div className={classes}
-              onResize={root_onResizeHandler}
-              ref={rootRef}>
-    <button onClick={playPause_onClickHandler}>Play</button>
-    <div className="gs-rac-wrapper"
-         ref={canvasWrapperRef}>
-      <canvas className="gs-rac-canvas"
-              width={canvasWidth}
-              height={canvasHeight}
-              ref={canvasRef} />
+  return <RACContext.Provider value={{...state, togglePlay}}>
+    <div className={classes}
+         ref={rootRef}>
+      {children}
     </div>
-  </div>;
+  </RACContext.Provider>;
 };
 
-export { ReactAudioControl };
+export {ReactAudioControl};

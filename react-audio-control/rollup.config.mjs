@@ -1,24 +1,24 @@
-import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import typescript from "@rollup/plugin-typescript";
-import dts from "rollup-plugin-dts";
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+import dts from 'rollup-plugin-dts';
 import image from '@rollup/plugin-image';
-import peerDepsExternal from "rollup-plugin-peer-deps-external";
-import css from 'rollup-plugin-css-only';
-import terser from '@rollup/plugin-terser';
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+import scss from 'rollup-plugin-scss'
 
-import { createRequire } from "module";
+import {createRequire} from 'module';
+
 const require = createRequire(import.meta.url);
 
-const packageJson = require("./package.json");
+const packageJson = require('./package.json');
 
 export default [
   {
-    input: "src/index.ts",
+    input: 'src/index.ts',
     output: [
       {
         file: packageJson.module,
-        format: "esm",
+        format: 'esm',
         sourcemap: true,
         strict: false
       },
@@ -26,22 +26,22 @@ export default [
     plugins: [
       peerDepsExternal(),
       resolve(),
+      scss({
+        output: 'dist/react-audio-control.css'
+      }),
       commonjs(),
-      typescript({ tsconfig: "./tsconfig.json" }),
-      image(),
-      css({
-        output: 'react-audio-control.css'
-      })
+      typescript({tsconfig: './tsconfig.json'}),
+      image()
     ],
-    external: ["react", "react-dom", "styled-components"],
+    external: ['react', 'react-dom', 'styled-components'],
   },
   {
-    input: "src/index.ts",
+    input: 'src/index.ts',
     output: [{
-      file: "dist/index.d.ts",
-      format: "esm"
+      file: 'dist/index.d.ts',
+      format: 'esm'
     }],
-    external: [/\.css$/],
+    external: [/\.s?css$/],
     plugins: [dts()],
   },
 ];

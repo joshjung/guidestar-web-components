@@ -1,8 +1,9 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useContext, useState } from 'react';
 
 var AudioProviderEventTypes;
 (function (AudioProviderEventTypes) {
     AudioProviderEventTypes["AUDIO_UPDATED"] = "AUDIO_UPDATED";
+    AudioProviderEventTypes["AUDIO_TIME_UPDATE"] = "AUDIO_TIME_UPDATE";
 })(AudioProviderEventTypes || (AudioProviderEventTypes = {}));
 
 class AudioUrlProvider {
@@ -63,6 +64,9 @@ class AudioUrlProvider {
         if (!this._audio && this._blob) {
             this._audio = new Audio();
             this._audio.src = URL.createObjectURL(this._blob);
+            this._audio.addEventListener('timeupdate', () => {
+                this.dispatch({ type: AudioProviderEventTypes.AUDIO_TIME_UPDATE });
+            });
         }
         return this._audio;
     }
@@ -75,6 +79,11 @@ class AudioUrlProvider {
     addListener(callback) {
         this._listeners.push(callback);
     }
+    removeListener(callback) {
+        const ix = this._listeners.indexOf(callback);
+        if (ix >= 0)
+            this._listeners.splice(ix, 1);
+    }
     dispatch(event) {
         this._listeners.forEach(l => l(event));
     }
@@ -83,6 +92,77 @@ class AudioUrlProvider {
 function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
+
+var classnames = {exports: {}};
+
+/*!
+	Copyright (c) 2018 Jed Watson.
+	Licensed under the MIT License (MIT), see
+	http://jedwatson.github.io/classnames
+*/
+
+(function (module) {
+	/* global define */
+
+	(function () {
+
+		var hasOwn = {}.hasOwnProperty;
+
+		function classNames() {
+			var classes = [];
+
+			for (var i = 0; i < arguments.length; i++) {
+				var arg = arguments[i];
+				if (!arg) continue;
+
+				var argType = typeof arg;
+
+				if (argType === 'string' || argType === 'number') {
+					classes.push(arg);
+				} else if (Array.isArray(arg)) {
+					if (arg.length) {
+						var inner = classNames.apply(null, arg);
+						if (inner) {
+							classes.push(inner);
+						}
+					}
+				} else if (argType === 'object') {
+					if (arg.toString !== Object.prototype.toString && !arg.toString.toString().includes('[native code]')) {
+						classes.push(arg.toString());
+						continue;
+					}
+
+					for (var key in arg) {
+						if (hasOwn.call(arg, key) && arg[key]) {
+							classes.push(key);
+						}
+					}
+				}
+			}
+
+			return classes.join(' ');
+		}
+
+		if (module.exports) {
+			classNames.default = classNames;
+			module.exports = classNames;
+		} else {
+			window.classNames = classNames;
+		}
+	}()); 
+} (classnames));
+
+var classnamesExports = classnames.exports;
+var classNames = /*@__PURE__*/getDefaultExportFromCjs(classnamesExports);
+
+const RACContext = React.createContext({
+    audioProvider: undefined,
+    playing: false,
+    percent: 0,
+    togglePlay() {
+        // NOOP
+    }
+});
 
 var sparkline$1 = {exports: {}};
 
@@ -118,7 +198,7 @@ var sparkline$1 = {exports: {}};
 	  \**********************/
 	/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-	eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _build_sparkline_wasm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../build/sparkline-wasm */ \"./build/sparkline-wasm.js\");\n\n// See: https://compile.fi/canvas-filled-three-ways-js-webassembly-and-webgl/\nvar Sparkline = /** @class */ (function () {\n    function Sparkline(options) {\n        var _this = this;\n        this._initPromise = undefined;\n        this.module = null;\n        this.dataPtr = null;\n        this.pixelPtr = null;\n        this.options = options || {};\n        this._initPromise = new Promise(function (resolve) {\n            (0,_build_sparkline_wasm__WEBPACK_IMPORTED_MODULE_0__[\"default\"])({\n                print: function (text) {\n                    var other = [];\n                    for (var _i = 1; _i < arguments.length; _i++) {\n                        other[_i - 1] = arguments[_i];\n                    }\n                    if (other.length > 0)\n                        text = text + ' ' + Array.prototype.slice.call(other).join(' ');\n                    console.log(text);\n                }\n            }).then(function (module) {\n                _this.module = module;\n                if (_this.options.ready) {\n                    _this.options.ready();\n                }\n                resolve();\n            });\n        });\n    }\n    Sparkline.prototype.init = function () {\n        return this._initPromise;\n    };\n    /**\n     * Render an audio-wave looking sparkline. This renders once and then cleans up memory preparing for another render.\n     *\n     * @param canvas The canvas to render to.\n     * @param data A series of numbers to render, where values magnitude is determined by their distance from 0.0.\n     * @param x The x location to render into\n     * @param y The y location to render into\n     * @param width The width of the rendered image\n     * @param height The height of the rendered image\n     * @param options The optional RenderWaveFormOptions to choose how to render.\n     */\n    Sparkline.prototype.renderWaveForm = function (canvas, data, x, y, width, height, options) {\n        var _this = this;\n        if (options === void 0) { options = {}; }\n        if (!this.module) {\n            throw new Error('Do not call renderWave until Sparkline is ready!');\n        }\n        var start = undefined;\n        if (this.options.profile) {\n            start = window.performance.now();\n        }\n        var ctx = canvas.getContext('2d', {\n            alpha: options.alpha !== undefined ? options.alpha : false,\n            antialias: false,\n            depth: false\n        });\n        if (!ctx) {\n            throw 'Your browser does not support canvas';\n        }\n        var _a = options.backgroundColor, backgroundColor = _a === void 0 ? 0xFFCCCCCC : _a, _b = options.foregroundColor, foregroundColor = _b === void 0 ? 0xFFEE1111 : _b, verticalLineX = options.verticalLineX, _c = options.verticalLineColor, verticalLineColor = _c === void 0 ? 0xFF0000FF : _c;\n        // We need to put our data into the sparkline WASM memory so it can be used\n        // We have to initialize some memory within the heap of the WebAssembly context to store the data...\n        this.pixelPtr = this.module._mallocPixelBuffer(width - x, height - y);\n        this.dataPtr = this.module._mallocFloatBuffer(data.length);\n        var dataArray = new Float32Array(this.module.HEAPF32.buffer, this.dataPtr, data.length);\n        // Copy our points into the heap memory of WASM...\n        for (var i = 0; i < data.length; i++) {\n            dataArray[i] = data[i];\n        }\n        // Render using WASM!\n        this.module._renderWaveForm(this.pixelPtr, x, y, width, height, this.dataPtr, data.length, backgroundColor, foregroundColor, true);\n        if (verticalLineX !== undefined) {\n            this.module._renderVerticalLine(this.pixelPtr, verticalLineX, 3, width, height, verticalLineColor);\n        }\n        var verticalTicks = options.verticalTicks;\n        if (verticalTicks && verticalTicks.length) {\n            if (!options.sampleRate) {\n                throw new Error('You must provide a sampleRate in order to use verticalTicks! (e.g. sampleRate: 44100)');\n            }\n            verticalTicks.forEach(function (vt) {\n                var _a;\n                var totalMillis = (data.length / options.sampleRate) * 1000;\n                var pixelsPerMilli = width / totalMillis;\n                var gap = pixelsPerMilli * vt.ms;\n                var xStart = vt.offsetMs ? -(vt.offsetMs * pixelsPerMilli) : 0;\n                (_a = _this.module) === null || _a === void 0 ? void 0 : _a._renderVerticalTicks(_this.pixelPtr, xStart, width, gap, 3, vt.height, width, height, vt.color);\n            });\n        }\n        var img = new ImageData(new Uint8ClampedArray(this.module.HEAPU8.buffer, this.pixelPtr, width * height * 4), width, height);\n        ctx.putImageData(img, 0, 0);\n        // Cleanup!\n        this.module._freeFloatBuffer(this.dataPtr);\n        this.module._freePixelBuffer(this.pixelPtr);\n        this.dataPtr = null;\n        this.pixelPtr = null;\n        if (this.options.profile && start) {\n            var end = window.performance.now();\n            console.log('Sparkline::renderWaveForm took ' + (end - start) + ' milliseconds to render ', data.length + \" samples into a \".concat(width, \"x\").concat(height, \" canvas.\"));\n        }\n    };\n    return Sparkline;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Sparkline);\n\n\n//# sourceURL=webpack://sparkline/./src/index.ts?");
+	eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _build_sparkline_wasm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../build/sparkline-wasm */ \"./build/sparkline-wasm.js\");\n\n// See: https://compile.fi/canvas-filled-three-ways-js-webassembly-and-webgl/\nvar Sparkline = /** @class */ (function () {\n    function Sparkline(options) {\n        var _this = this;\n        this._initPromise = undefined;\n        this.module = null;\n        this.dataPtr = null;\n        this.pixelPtr = null;\n        this.options = options || {};\n        this._initPromise = new Promise(function (resolve) {\n            (0,_build_sparkline_wasm__WEBPACK_IMPORTED_MODULE_0__[\"default\"])({\n                print: function (text) {\n                    var other = [];\n                    for (var _i = 1; _i < arguments.length; _i++) {\n                        other[_i - 1] = arguments[_i];\n                    }\n                    if (other.length > 0)\n                        text = text + ' ' + Array.prototype.slice.call(other).join(' ');\n                    console.log(text);\n                }\n            }).then(function (module) {\n                _this.module = module;\n                if (_this.options.ready) {\n                    _this.options.ready();\n                }\n                resolve();\n            });\n        });\n    }\n    Sparkline.prototype.init = function () {\n        return this._initPromise;\n    };\n    /**\n     * Render an audio-wave looking sparkline. This renders once and then cleans up memory preparing for another render.\n     *\n     * @param canvas The canvas to render to.\n     * @param data A series of numbers to render, where values magnitude is determined by their distance from 0.0.\n     * @param x The x location to render into\n     * @param y The y location to render into\n     * @param width The width of the rendered image\n     * @param height The height of the rendered image\n     * @param options The optional RenderWaveFormOptions to choose how to render.\n     */\n    Sparkline.prototype.renderWaveForm = function (canvas, data, x, y, width, height, options) {\n        var _this = this;\n        if (options === void 0) { options = {}; }\n        if (!this.module) {\n            throw new Error('Do not call renderWave until Sparkline is ready!');\n        }\n        var start = undefined;\n        if (this.options.profile) {\n            start = window.performance.now();\n        }\n        var ctx = canvas.getContext('2d', {\n            alpha: options.alpha !== undefined ? options.alpha : false,\n            antialias: true,\n            depth: false\n        });\n        if (!ctx) {\n            throw 'Your browser does not support canvas';\n        }\n        var _a = options.backgroundColor, backgroundColor = _a === void 0 ? 0xFFCCCCCC : _a, _b = options.foregroundColor, foregroundColor = _b === void 0 ? 0xFFEE1111 : _b, verticalLineX = options.verticalLineX, _c = options.verticalLineColor, verticalLineColor = _c === void 0 ? 0xFF0000FF : _c;\n        // We need to put our data into the sparkline WASM memory so it can be used\n        // We have to initialize some memory within the heap of the WebAssembly context to store the data...\n        this.pixelPtr = this.module._mallocPixelBuffer(width - x, height - y);\n        this.dataPtr = this.module._mallocFloatBuffer(data.length);\n        var dataArray = new Float32Array(this.module.HEAPF32.buffer, this.dataPtr, data.length);\n        // Copy our points into the heap memory of WASM...\n        for (var i = 0; i < data.length; i++) {\n            dataArray[i] = data[i];\n        }\n        // Render using WASM!\n        this.module._renderWaveForm(this.pixelPtr, x, y, width, height, this.dataPtr, data.length, backgroundColor, foregroundColor, true);\n        if (verticalLineX !== undefined) {\n            this.module._renderVerticalLine(this.pixelPtr, verticalLineX, 3, width, height, verticalLineColor);\n        }\n        var verticalTicks = options.verticalTicks;\n        if (verticalTicks && verticalTicks.length) {\n            if (!options.sampleRate) {\n                throw new Error('You must provide a sampleRate in order to use verticalTicks! (e.g. sampleRate: 44100)');\n            }\n            verticalTicks.forEach(function (vt) {\n                var _a;\n                var totalMillis = (data.length / options.sampleRate) * 1000;\n                var pixelsPerMilli = width / totalMillis;\n                var gap = pixelsPerMilli * vt.ms;\n                var xStart = vt.offsetMs ? -(vt.offsetMs * pixelsPerMilli) : 0;\n                (_a = _this.module) === null || _a === void 0 ? void 0 : _a._renderVerticalTicks(_this.pixelPtr, xStart, width, gap, 3, vt.height, width, height, vt.color);\n            });\n        }\n        var img = new ImageData(new Uint8ClampedArray(this.module.HEAPU8.buffer, this.pixelPtr, width * height * 4), width, height);\n        ctx.putImageData(img, 0, 0);\n        // Cleanup!\n        this.module._freeFloatBuffer(this.dataPtr);\n        this.module._freePixelBuffer(this.pixelPtr);\n        this.dataPtr = null;\n        this.pixelPtr = null;\n        if (this.options.profile && start) {\n            var end = window.performance.now();\n            console.log('Sparkline::renderWaveForm took ' + (end - start) + ' milliseconds to render ', data.length + \" samples into a \".concat(width, \"x\").concat(height, \" canvas.\"));\n        }\n    };\n    return Sparkline;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Sparkline);\n\n\n//# sourceURL=webpack://sparkline/./src/index.ts?");
 
 	/***/ }),
 
@@ -225,105 +305,89 @@ var sparkline$1 = {exports: {}};
 var sparklineExports = sparkline$1.exports;
 var Sparkline = /*@__PURE__*/getDefaultExportFromCjs(sparklineExports);
 
-var classnames = {exports: {}};
+(undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 
-/*!
-	Copyright (c) 2018 Jed Watson.
-	Licensed under the MIT License (MIT), see
-	http://jedwatson.github.io/classnames
-*/
+(undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 
-(function (module) {
-	/* global define */
+function useInterval(callback, delay) {
+    const savedCallback = useRef(callback);
+    useIsomorphicLayoutEffect(() => {
+        savedCallback.current = callback;
+    }, [callback]);
+    useEffect(() => {
+        if (!delay && delay !== 0) {
+            return;
+        }
+        const id = setInterval(() => savedCallback.current(), delay);
+        return () => clearInterval(id);
+    }, [delay]);
+}
 
-	(function () {
-
-		var hasOwn = {}.hasOwnProperty;
-
-		function classNames() {
-			var classes = [];
-
-			for (var i = 0; i < arguments.length; i++) {
-				var arg = arguments[i];
-				if (!arg) continue;
-
-				var argType = typeof arg;
-
-				if (argType === 'string' || argType === 'number') {
-					classes.push(arg);
-				} else if (Array.isArray(arg)) {
-					if (arg.length) {
-						var inner = classNames.apply(null, arg);
-						if (inner) {
-							classes.push(inner);
-						}
-					}
-				} else if (argType === 'object') {
-					if (arg.toString !== Object.prototype.toString && !arg.toString.toString().includes('[native code]')) {
-						classes.push(arg.toString());
-						continue;
-					}
-
-					for (var key in arg) {
-						if (hasOwn.call(arg, key) && arg[key]) {
-							classes.push(key);
-						}
-					}
-				}
-			}
-
-			return classes.join(' ');
-		}
-
-		if (module.exports) {
-			classNames.default = classNames;
-			module.exports = classNames;
-		} else {
-			window.classNames = classNames;
-		}
-	}()); 
-} (classnames));
-
-var classnamesExports = classnames.exports;
-var classNames = /*@__PURE__*/getDefaultExportFromCjs(classnamesExports);
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const sparkline = new Sparkline();
-const ReactAudioControl = ({ audioProvider, channelOptions, className }) => {
-    const classes = classNames('gs-rac', className);
+function RACCanvas({ className, profile }) {
+    const c = classNames('rac-wrapper', className);
+    const context = useContext(RACContext);
+    const { audioProvider, channelOptions } = context;
     const canvasWrapperRef = useRef(null);
     const canvasRef = useRef(null);
-    const rootRef = useRef(null);
     const [canvasWidth, setCanvasWidth] = useState(0);
     const [canvasHeight, setCanvasHeight] = useState(0);
     const [renderTrigger, setRenderTrigger] = useState(0);
     function render(canvasWidth, canvasHeight) {
-        console.log(canvasRef === null || canvasRef === void 0 ? void 0 : canvasRef.current, audioProvider.loaded, canvasWidth, canvasHeight);
-        if ((canvasRef === null || canvasRef === void 0 ? void 0 : canvasRef.current) && audioProvider.loaded && canvasWidth && canvasHeight) {
-            // For now, default to just mono if not otherwise specified
-            channelOptions = channelOptions || [{
-                    backgroundColor: 0xFF000000,
-                    foregroundColor: 0xFFFFFFFF,
-                    fillBackground: true
-                }];
-            channelOptions.forEach((channelOption, ix) => {
-                var _a, _b, _c, _d, _e, _f, _g;
-                if (ix < audioProvider.getAudioBuffer().numberOfChannels) {
-                    const _x = (_a = channelOption.x) !== null && _a !== void 0 ? _a : 0;
-                    const _y = (_b = channelOption.y) !== null && _b !== void 0 ? _b : 0;
-                    const _w = (_c = channelOption.width) !== null && _c !== void 0 ? _c : canvasWidth;
-                    const _h = (_d = channelOption.height) !== null && _d !== void 0 ? _d : canvasHeight;
-                    const _bg = (_e = channelOption.backgroundColor) !== null && _e !== void 0 ? _e : 0xFF000000;
-                    const _fg = (_f = channelOption.foregroundColor) !== null && _f !== void 0 ? _f : 0xFFFFFFFF;
-                    const _fbg = (_g = channelOption.fillBackground) !== null && _g !== void 0 ? _g : false;
-                    sparkline.renderWaveForm(canvasRef.current, audioProvider.getSamples(ix), _x, _y, _w, _h, {
-                        backgroundColor: _bg,
-                        foregroundColor: _fg,
-                        fillBackground: _fbg
-                    });
-                }
-                else {
-                    console.warn(`Unable to render wave form for channel ${ix}`);
-                }
+        if ((canvasRef === null || canvasRef === void 0 ? void 0 : canvasRef.current) && (audioProvider === null || audioProvider === void 0 ? void 0 : audioProvider.loaded) && canvasWidth && canvasHeight) {
+            window.requestAnimationFrame(() => {
+                sparkline.options.profile = profile;
+                // For now, default to just mono if not otherwise specified
+                const _channelOptions = channelOptions || [{
+                        backgroundColor: 0x00000000,
+                        foregroundColor: 0xFFCC4433,
+                        fillBackground: true
+                    }];
+                _channelOptions.forEach((channelOption, ix) => {
+                    var _a, _b, _c, _d, _e, _f, _g, _j;
+                    if (ix < audioProvider.getAudioBuffer().numberOfChannels) {
+                        const _x = (_a = channelOption.x) !== null && _a !== void 0 ? _a : 0;
+                        const _y = (_b = channelOption.y) !== null && _b !== void 0 ? _b : 0;
+                        const _w = (_c = channelOption.width) !== null && _c !== void 0 ? _c : canvasWidth;
+                        const _h = (_d = channelOption.height) !== null && _d !== void 0 ? _d : canvasHeight;
+                        const _bg = (_e = channelOption.backgroundColor) !== null && _e !== void 0 ? _e : 0x00000000;
+                        const _fg = (_f = channelOption.foregroundColor) !== null && _f !== void 0 ? _f : 0xFFFFFFFF;
+                        const _fbg = (_g = channelOption.fillBackground) !== null && _g !== void 0 ? _g : false;
+                        const _vlc = (_j = channelOption.verticalLineColor) !== null && _j !== void 0 ? _j : 0xFFFF0000;
+                        let audio = audioProvider.getAudio();
+                        let percentComplete = audio.currentTime / audio.duration;
+                        let x = Math.round(_w * percentComplete);
+                        sparkline.renderWaveForm(canvasRef.current, audioProvider.getSamples(ix), _x, _y, _w, _h, {
+                            backgroundColor: _bg,
+                            foregroundColor: _fg,
+                            fillBackground: _fbg,
+                            alpha: true,
+                            verticalLineX: isNaN(x) ? -1 : x,
+                            verticalLineColor: _vlc,
+                        });
+                    }
+                    else {
+                        console.warn(`Unable to render wave form for channel ${ix}`);
+                    }
+                });
             });
         }
     }
@@ -335,28 +399,143 @@ const ReactAudioControl = ({ audioProvider, channelOptions, className }) => {
         }
         render(canvasWidth, canvasHeight);
     }
+    useInterval(() => {
+        render(canvasWidth, canvasHeight);
+    }, context.playing ? 30 : null);
+    useEffect(() => {
+        const callback = (event) => {
+            setRenderTrigger(renderTrigger + 1);
+        };
+        audioProvider === null || audioProvider === void 0 ? void 0 : audioProvider.addListener(callback);
+        return () => audioProvider === null || audioProvider === void 0 ? void 0 : audioProvider.removeListener(callback);
+    }, [renderTrigger]);
     useEffect(() => {
         render(canvasWidth, canvasHeight);
     }, [canvasWidth, canvasHeight, renderTrigger]);
     useEffect(() => {
-        audioProvider.addListener((event) => {
-            if (event.type === AudioProviderEventTypes.AUDIO_UPDATED) {
-                setRenderTrigger(renderTrigger + 1);
-            }
-        });
         calcSizeAndTriggerRender();
-    }, []);
+    }, [audioProvider]);
     function root_onResizeHandler() {
         calcSizeAndTriggerRender();
     }
-    function playPause_onClickHandler() {
-        audioProvider.getAudio().play();
+    return React.createElement("div", { className: c, onResize: root_onResizeHandler, ref: canvasWrapperRef },
+        React.createElement("canvas", { className: "rac-canvas", width: canvasWidth, height: canvasHeight, ref: canvasRef }));
+}
+
+var DefaultContext = {
+  color: undefined,
+  size: undefined,
+  className: undefined,
+  style: undefined,
+  attr: undefined
+};
+var IconContext = React.createContext && React.createContext(DefaultContext);
+
+var __assign = undefined && undefined.__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
     }
-    return React.createElement("div", { className: classes, onResize: root_onResizeHandler, ref: rootRef },
-        React.createElement("button", { onClick: playPause_onClickHandler }, "Play"),
-        React.createElement("div", { className: "gs-rac-wrapper", ref: canvasWrapperRef },
-            React.createElement("canvas", { className: "gs-rac-canvas", width: canvasWidth, height: canvasHeight, ref: canvasRef })));
+    return t;
+  };
+  return __assign.apply(this, arguments);
+};
+var __rest = undefined && undefined.__rest || function (s, e) {
+  var t = {};
+  for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
+  if (s != null && typeof Object.getOwnPropertySymbols === "function") for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+    if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
+  }
+  return t;
+};
+function Tree2Element(tree) {
+  return tree && tree.map(function (node, i) {
+    return React.createElement(node.tag, __assign({
+      key: i
+    }, node.attr), Tree2Element(node.child));
+  });
+}
+function GenIcon(data) {
+  // eslint-disable-next-line react/display-name
+  return function (props) {
+    return React.createElement(IconBase, __assign({
+      attr: __assign({}, data.attr)
+    }, props), Tree2Element(data.child));
+  };
+}
+function IconBase(props) {
+  var elem = function (conf) {
+    var attr = props.attr,
+      size = props.size,
+      title = props.title,
+      svgProps = __rest(props, ["attr", "size", "title"]);
+    var computedSize = size || conf.size || "1em";
+    var className;
+    if (conf.className) className = conf.className;
+    if (props.className) className = (className ? className + " " : "") + props.className;
+    return React.createElement("svg", __assign({
+      stroke: "currentColor",
+      fill: "currentColor",
+      strokeWidth: "0"
+    }, conf.attr, attr, svgProps, {
+      className: className,
+      style: __assign(__assign({
+        color: props.color || conf.color
+      }, conf.style), props.style),
+      height: computedSize,
+      width: computedSize,
+      xmlns: "http://www.w3.org/2000/svg"
+    }), title && React.createElement("title", null, title), props.children);
+  };
+  return IconContext !== undefined ? React.createElement(IconContext.Consumer, null, function (conf) {
+    return elem(conf);
+  }) : elem(DefaultContext);
+}
+
+// THIS FILE IS AUTO GENERATED
+function FaPlay (props) {
+  return GenIcon({"tag":"svg","attr":{"viewBox":"0 0 448 512"},"child":[{"tag":"path","attr":{"d":"M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z"}}]})(props);
+}function FaStop (props) {
+  return GenIcon({"tag":"svg","attr":{"viewBox":"0 0 448 512"},"child":[{"tag":"path","attr":{"d":"M400 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48z"}}]})(props);
+}
+
+function RACPlayPause({ className }) {
+    const c = classNames('rac-play-pause', className);
+    const { togglePlay, playing } = useContext(RACContext);
+    function playPause_onClickHandler() {
+        togglePlay();
+    }
+    return React.createElement("div", { className: c },
+        React.createElement("button", { onClick: playPause_onClickHandler }, playing ? React.createElement(FaStop, null) : React.createElement(FaPlay, null)));
+}
+
+const ReactAudioControl = ({ audioProvider, channelOptions, className, children }) => {
+    const classes = classNames('rac', className);
+    const rootRef = useRef(null);
+    function togglePlay() {
+        var _a, _b;
+        if (state.playing) {
+            (_a = state.audioProvider) === null || _a === void 0 ? void 0 : _a.getAudio().pause();
+        }
+        else {
+            (_b = state.audioProvider) === null || _b === void 0 ? void 0 : _b.getAudio().play();
+        }
+        setState(Object.assign(Object.assign({}, state), { playing: !state.playing }));
+    }
+    const [state, setState] = useState({
+        audioProvider,
+        playing: false,
+        percent: 0,
+        channelOptions,
+        togglePlay
+    });
+    children = children || React.createElement(React.Fragment, null,
+        React.createElement(RACPlayPause, { className: "default" }),
+        React.createElement(RACCanvas, { className: "default" }));
+    return React.createElement(RACContext.Provider, { value: Object.assign(Object.assign({}, state), { togglePlay }) },
+        React.createElement("div", { className: classes, ref: rootRef }, children));
 };
 
-export { AudioUrlProvider, ReactAudioControl };
+export { AudioUrlProvider, RACCanvas, RACContext, RACPlayPause, ReactAudioControl };
 //# sourceMappingURL=index.js.map

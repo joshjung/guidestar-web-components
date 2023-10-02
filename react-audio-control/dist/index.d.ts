@@ -5,7 +5,8 @@ type AudioProviderEvent = {
     type: AudioProviderEventTypes;
 };
 declare enum AudioProviderEventTypes {
-    AUDIO_UPDATED = "AUDIO_UPDATED"
+    AUDIO_UPDATED = "AUDIO_UPDATED",
+    AUDIO_TIME_UPDATE = "AUDIO_TIME_UPDATE"
 }
 interface IAudioProvider {
     load(): Promise<IAudioProvider>;
@@ -15,6 +16,7 @@ interface IAudioProvider {
     getAudio(): HTMLAudioElement;
     getSamples(channel: number): number[];
     addListener(callback: (event: AudioProviderEvent) => void): void;
+    removeListener(callback: (event: AudioProviderEvent) => void): void;
 }
 
 declare class AudioUrlProvider implements IAudioProvider {
@@ -38,6 +40,7 @@ declare class AudioUrlProvider implements IAudioProvider {
     getAudioBuffer(): AudioBuffer;
     getAudioContext(): AudioContext;
     addListener(callback: (event: AudioProviderEvent) => void): void;
+    removeListener(callback: (event: AudioProviderEvent) => void): void;
     private dispatch;
 }
 
@@ -51,7 +54,28 @@ interface ReactAudioControlProps {
     audioProvider: IAudioProvider;
     channelOptions?: ChannelOptions[];
     className?: string;
+    children?: React.JSX.Element | React.JSX.Element[];
 }
-declare const ReactAudioControl: ({ audioProvider, channelOptions, className }: ReactAudioControlProps) => React.JSX.Element;
+declare const ReactAudioControl: ({ audioProvider, channelOptions, className, children }: ReactAudioControlProps) => React.JSX.Element;
 
-export { AudioUrlProvider, type IAudioProvider, ReactAudioControl };
+type RACContextType = {
+    audioProvider?: IAudioProvider;
+    playing: boolean;
+    percent: number;
+    channelOptions?: ChannelOptions[];
+    togglePlay(): void;
+};
+declare const RACContext: React.Context<RACContextType>;
+
+type RACPlayPauseProps = {
+    className?: string;
+};
+declare function RACPlayPause({ className }: RACPlayPauseProps): React.JSX.Element;
+
+type RACCanvasProps = {
+    className?: string;
+    profile?: boolean;
+};
+declare function RACCanvas({ className, profile }: RACCanvasProps): React.JSX.Element;
+
+export { AudioUrlProvider, type IAudioProvider, RACCanvas, RACContext, RACPlayPause, ReactAudioControl };

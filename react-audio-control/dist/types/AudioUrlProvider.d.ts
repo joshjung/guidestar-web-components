@@ -20,5 +20,6 @@ export declare class AudioUrlProvider implements IAudioProvider {
     getAudioBuffer(): AudioBuffer;
     getAudioContext(): AudioContext;
     addListener(callback: (event: AudioProviderEvent) => void): void;
+    removeListener(callback: (event: AudioProviderEvent) => void): void;
     private dispatch;
 }
