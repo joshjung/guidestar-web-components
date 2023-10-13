@@ -78,7 +78,7 @@ function renderWaveToSparkline() {
           /**
            * This is the important part! Render a sparkline using some data stored here in 'values' array.
            */
-          sparkline.renderWaveForm(canvasLarge, values, width, height, {
+          sparkline.renderWaveForm(canvasLarge, values, 0, 0, width, height, {
             backgroundColor: 0xFFCC4444,
             foregroundColor: 0xFFFFFFFF,
             fillBackground: true,
@@ -94,7 +94,7 @@ function renderWaveToSparkline() {
             }]
           });
 
-          sparkline.renderWaveForm(canvasSmall, values, Math.floor(width / 3), Math.floor(height / 3), {
+          sparkline.renderWaveForm(canvasSmall, values, 0, 0, Math.floor(width / 3), Math.floor(height / 3), {
             backgroundColor: 0xFFFFFFFF,
             foregroundColor: 0xFF33EE33,
             fillBackground: true

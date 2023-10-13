@@ -1,0 +1,53 @@
+.rac {
+  min-width: 200px;
+  min-height: 75px;
+  background: lightgrey;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  /**
+   * Clear all button styles
+   */
+}
+.rac button {
+  background: transparent;
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+}
+.rac .rac-play-pause.default {
+  margin: 12px;
+}
+.rac .rac-play-pause.default button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #333;
+  border-radius: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rac .rac-play-pause.default button svg {
+  color: #333;
+}
+.rac .rac-wrapper {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.rac .rac-wrapper .rac-canvas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
